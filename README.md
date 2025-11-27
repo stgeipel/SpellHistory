@@ -1,6 +1,7 @@
 <div align="center">
+
  ![Spell History](./SpellHistory.png)
- # Spell History
+
 </div>
 
 ---
