@@ -268,7 +268,7 @@ end
 -- Setting: Hide Profession Spells Checkbox
 --------------------------------------------------------------------------------
 do
-    local defaultValue = false
+    local defaultValue = true
 
     local function GetValue()
         return SpellHistoryDB.hideProfessions

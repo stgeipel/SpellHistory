@@ -58,7 +58,7 @@ local defaults = {
     showBorder = true,
     backgroundAlpha = 0.5,
     showInterrupted = true,
-    hideProfessions = false,
+    hideProfessions = true,
     position = {
         point = "CENTER",
         x = 0,
@@ -267,19 +267,35 @@ local function IsProfessionSpell(spellID)
     local spellInfo = C_Spell.GetSpellInfo(spellID)
     if not spellInfo then return false end
 
-    -- Check if spell is from a tradeskill
-    local tradeskillLineID = C_Spell.GetSpellTradeSkillLine(spellID)
-    if tradeskillLineID then
+    -- Check if spell is a profession recipe
+    local recipeInfo = C_TradeSkillUI.GetRecipeInfo(spellID)
+    if recipeInfo and recipeInfo.learned then
         return true
     end
 
-    -- Additional check: Is it in a profession spell book?
-    local professionInfo = C_TradeSkillUI.GetAllProfessionTradeSkillLines()
-    if professionInfo then
-        for _, profession in ipairs(professionInfo) do
-            if C_Spell.IsSpellInRange(spellInfo.name, profession) then
-                return true
-            end
+    -- Check spell name for common profession keywords
+    local professionKeywords = {
+        "Blacksmithing", "Schmiedekunst",
+        "Alchemy", "Alchemie",
+        "Engineering", "Ingenieurskunst",
+        "Tailoring", "Schneiderei",
+        "Leatherworking", "Lederverarbeitung",
+        "Enchanting", "Verzauberkunst",
+        "Jewelcrafting", "Juwelenschleifen",
+        "Inscription", "Inschriftenkunde",
+        "Herbalism", "Kräuterkunde",
+        "Mining", "Bergbau",
+        "Skinning", "Kürschnerei",
+        "Cooking", "Kochkunst",
+        "First Aid", "Erste Hilfe",
+        "Fishing", "Angeln",
+        "Archaeology", "Archäologie"
+    }
+
+    local spellName = spellInfo.name:lower()
+    for _, keyword in ipairs(professionKeywords) do
+        if spellName:find(keyword:lower(), 1, true) then
+            return true
         end
     end
 
