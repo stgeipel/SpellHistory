@@ -1,0 +1,9 @@
+## Interface: 120000
+## Title: Spell History
+## Notes: Shows a history of recently cast spells in a movable frame.
+## Author: Yonguri
+## Version: 1.0.0
+## SavedVariables: SpellHistoryDB
+
+Core.lua
+Config.lua

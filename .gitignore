@@ -1,0 +1,21 @@
+# WoW AddOn Development
+*.bak
+*.orig
+*.swp
+*~
+
+# Release packages
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Packager output
+.release/
