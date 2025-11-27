@@ -63,8 +63,8 @@ Access all settings through the addon settings panel:
 
 ## Screenshots
 
-![Spell History in action](screenshot1.png)
-![Settings Panel](screenshot2.png)
+![Spell History in action](screenshot1.jpg)
+![Settings Panel](screenshot2.jpg)
 
 ## FAQ
 
