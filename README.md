@@ -1,6 +1,11 @@
-# Spell History
+<div align="center">
+ ![Spell History](./SpellHistory.png)
+ # Spell History
+</div>
 
-A lightweight and customizable WoW addon that displays your recently cast and interrupted spells in a movable frame.
+---
+
+**SpellHistory** is a lightweight and customizable WoW addon that displays your recently cast and interrupted spells in a movable frame.
 
 ## Features
 
@@ -18,36 +23,12 @@ A lightweight and customizable WoW addon that displays your recently cast and in
 - **Localized**: Full German and English translations
 - **WoW Midnight Compatible**: Built for WoW 12.0+
 
-## Installation
-
-### CurseForge Client (Recommended)
-
-Install through the CurseForge client or Overwolf
-
-### Manual Installation
-
-1. Download the latest release
-2. Extract the `SpellHistory` folder to `World of Warcraft\_retail_\Interface\AddOns\`
-3. Restart WoW
-
 ## Usage
 
 ### Commands
 
 - `/spellhistory` or `/sh` - Open settings panel
 - `/spellhistory clear` - Clear spell history
-
-### Configuration
-
-Access all settings through the addon settings panel:
-
-- ESC → Interface → AddOns → Spell History
-- Or use `/spellhistory`
-
-### Moving the Frame
-
-1. Left-click and drag the frame to desired position
-2. Enable "Lock Frame" in settings to prevent accidental movement
 
 ## Settings Overview
 
@@ -66,25 +47,7 @@ Access all settings through the addon settings panel:
 ![Spell History in action](screenshot1.jpg)
 ![Settings Panel](screenshot2.jpg)
 
-## FAQ
-
-**Q: The frame is in the way, how do I move it?**
-A: Left-click and drag it to a new position. You can also enable "Lock Frame" in settings to prevent accidental movement.
-
-**Q: Can I hide interrupted spells?**
-A: Yes! Uncheck "Show Interrupted Spells" in the settings panel.
-
-**Q: How do I make the background transparent?**
-A: Adjust the "Background Transparency" slider in settings. 0% = fully transparent.
-
-**Q: Does this work in combat?**
-A: Yes, the addon works at all times and has no restrictions.
-
-**Q: Will this cause performance issues?**
-A: No, the addon is highly optimized with automatic memory cleanup and duplicate prevention.
-
 ## Support
 
 - **Issues & Bug Reports**: [GitHub Issues](https://github.com/stgeipel/SpellHistory/issues)
 - **Feature Requests**: [GitHub Issues](https://github.com/stgeipel/SpellHistory/issues)
-
