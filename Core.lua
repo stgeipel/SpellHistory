@@ -1,6 +1,11 @@
 --[[
     Spell History Addon for WoW Midnight (12.0)
-    Displays your cast and interrupted spells in a movable frame
+    Shows ONLY spells you actually pressed (player-initiated casts)
+    by filtering via UNIT_SPELLCAST_SENT.
+
+    Notes:
+    - Trigger/proc spells (e.g. Living Flame fired by something else) are ignored,
+      because they usually do NOT have a matching UNIT_SPELLCAST_SENT for the player.
 ]]
 
 local addonName, addon = ...
@@ -10,6 +15,25 @@ local addonName, addon = ...
 --------------------------------------------------------------------------------
 SpellHistory = {}
 SpellHistory.history = {}
+
+--------------------------------------------------------------------------------
+-- Debugging
+--------------------------------------------------------------------------------
+local DEBUG = false -- set true to print event debug
+local function dbg(event, unit, castGUID, spellID, extra)
+    if not DEBUG then return end
+    local info = spellID and C_Spell.GetSpellInfo(spellID)
+    local name = info and info.name or "nil"
+    print(string.format(
+        "[SpellHistory] %s | unit=%s | guid=%s | spellID=%s (%s)%s",
+        tostring(event),
+        tostring(unit),
+        tostring(castGUID),
+        tostring(spellID),
+        tostring(name),
+        extra and (" | " .. tostring(extra)) or ""
+    ))
+end
 
 --------------------------------------------------------------------------------
 -- Localization
@@ -32,7 +56,7 @@ if locale == "deDE" then
     L.CMD_HELP = "Befehle:"
     L.CMD_CONFIG = "Öffnet Einstellungen"
     L.CMD_CLEAR = "Löscht Historie"
-else -- Default English
+else
     L.ADDON_LOADED = "Spell History loaded. Use /spellhistory for settings."
     L.POSITION_RESET = "Position has been reset."
     L.HISTORY_CLEARED = "History has been cleared."
@@ -64,12 +88,8 @@ local defaults = {
     showInterrupted = true,
     hideProfessions = true,
     verticalOrientation = false,
-    growDirection = "normal", -- "normal" or "reverse" (horizontal: left/right, vertical: top/bottom)
-    position = {
-        point = "CENTER",
-        x = 0,
-        y = 0
-    }
+    growDirection = "normal", -- "normal" or "reverse"
+    position = { point = "CENTER", x = 0, y = 0 }
 }
 
 --------------------------------------------------------------------------------
@@ -79,7 +99,6 @@ local function InitializeDB()
     if not SpellHistoryDB then
         SpellHistoryDB = CopyTable(defaults)
     else
-        -- Merge with defaults for any missing values
         for k, v in pairs(defaults) do
             if SpellHistoryDB[k] == nil then
                 SpellHistoryDB[k] = v
@@ -92,20 +111,19 @@ end
 -- Main Frame Creation
 --------------------------------------------------------------------------------
 local mainFrame = CreateFrame("Frame", "SpellHistoryFrame", UIParent, "BackdropTemplate")
-mainFrame:SetSize(450, 50)
 mainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 mainFrame:SetMovable(true)
 mainFrame:EnableMouse(true)
 mainFrame:RegisterForDrag("LeftButton")
 mainFrame:SetClampedToScreen(true)
 
--- Background texture
+-- Background
 local bg = mainFrame:CreateTexture(nil, "BACKGROUND")
 bg:SetAllPoints(true)
 bg:SetColorTexture(0, 0, 0, 0.5)
 mainFrame.bg = bg
 
--- Border backdrop
+-- Border
 mainFrame:SetBackdrop({
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     edgeSize = 16,
@@ -116,8 +134,6 @@ mainFrame:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
 --------------------------------------------------------------------------------
 -- Frame Update Functions
 --------------------------------------------------------------------------------
-
--- Update lock state based on settings
 function SpellHistory:UpdateLockState()
     if SpellHistoryDB.locked then
         mainFrame:EnableMouse(false)
@@ -128,12 +144,9 @@ function SpellHistory:UpdateLockState()
     end
 end
 
--- Update visual settings (border, background alpha)
 function SpellHistory:UpdateVisuals()
-    -- Background transparency
     mainFrame.bg:SetColorTexture(0, 0, 0, SpellHistoryDB.backgroundAlpha)
 
-    -- Border visibility
     if SpellHistoryDB.showBorder then
         mainFrame:SetBackdrop({
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -158,7 +171,7 @@ end)
 mainFrame:SetScript("OnDragStop", function(self)
     if not SpellHistoryDB.locked then
         self:StopMovingOrSizing()
-        local point, _, relativePoint, x, y = self:GetPoint()
+        local point, _, _, x, y = self:GetPoint()
         SpellHistoryDB.position.point = point
         SpellHistoryDB.position.x = x
         SpellHistoryDB.position.y = y
@@ -170,128 +183,99 @@ end)
 --------------------------------------------------------------------------------
 local iconPool = {}
 
--- Get or create an icon frame
 local function GetIcon(index)
-    if not iconPool[index] then
-        local icon = CreateFrame("Frame", nil, mainFrame)
-        icon:SetSize(SpellHistoryDB.iconSize, SpellHistoryDB.iconSize)
+    if iconPool[index] then return iconPool[index] end
 
-        -- Spell icon texture
-        icon.texture = icon:CreateTexture(nil, "ARTWORK")
-        icon.texture:SetAllPoints(true)
-        icon.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    local icon = CreateFrame("Frame", nil, mainFrame)
 
-        -- Border (unused but kept for future use)
-        icon.border = icon:CreateTexture(nil, "OVERLAY")
-        icon.border:SetAllPoints(true)
-        icon.border:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-        icon.border:SetBlendMode("ADD")
-        icon.border:Hide()
+    icon.texture = icon:CreateTexture(nil, "ARTWORK")
+    icon.texture:SetAllPoints(true)
+    icon.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
-        -- Red overlay for interrupted spells
-        icon.overlay = icon:CreateTexture(nil, "OVERLAY")
-        icon.overlay:SetAllPoints(true)
-        icon.overlay:SetColorTexture(1, 0, 0, 0.3)
-        icon.overlay:Hide()
+    icon.border = icon:CreateTexture(nil, "OVERLAY")
+    icon.border:SetAllPoints(true)
+    icon.border:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    icon.border:SetBlendMode("ADD")
+    icon.border:Hide()
 
-        -- Tooltip on hover
-        icon:SetScript("OnEnter", function(self)
-            if self.spellData then
-                GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                GameTooltip:SetSpellByID(self.spellData.spellID)
+    icon.overlay = icon:CreateTexture(nil, "OVERLAY")
+    icon.overlay:SetAllPoints(true)
+    icon.overlay:SetColorTexture(1, 0, 0, 0.3)
+    icon.overlay:Hide()
 
-                if self.spellData.interrupted then
-                    GameTooltip:AddLine("|cFFFF0000" .. L.INTERRUPTED .. "|r", 1, 1, 1)
-                else
-                    GameTooltip:AddLine("|cFF00FF00" .. L.SUCCEEDED .. "|r", 1, 1, 1)
-                end
-
-                GameTooltip:Show()
+    icon:SetScript("OnEnter", function(self)
+        if self.spellData then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetSpellByID(self.spellData.spellID)
+            if self.spellData.interrupted then
+                GameTooltip:AddLine("|cFFFF0000" .. L.INTERRUPTED .. "|r", 1, 1, 1)
+            else
+                GameTooltip:AddLine("|cFF00FF00" .. L.SUCCEEDED .. "|r", 1, 1, 1)
             end
-        end)
+            GameTooltip:Show()
+        end
+    end)
 
-        icon:SetScript("OnLeave", function(self)
-            GameTooltip:Hide()
-        end)
+    icon:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-        iconPool[index] = icon
-    end
-
-    return iconPool[index]
+    iconPool[index] = icon
+    return icon
 end
 
 --------------------------------------------------------------------------------
 -- Display Update
 --------------------------------------------------------------------------------
 function SpellHistory:UpdateDisplay()
+    if not SpellHistoryDB then return end
+
     local iconSize = SpellHistoryDB.iconSize
-    local spacing = SpellHistoryDB.spacing
+    local spacing  = SpellHistoryDB.spacing
     local maxSpells = SpellHistoryDB.maxSpells
-
-    -- Calculate and set frame size based on orientation
     local isVertical = SpellHistoryDB.verticalOrientation
-    local frameWidth, frameHeight
+    local isReversed = SpellHistoryDB.growDirection == "reverse"
 
+    -- Frame size
+    local frameWidth, frameHeight
     if isVertical then
-        frameWidth = iconSize + 16
+        frameWidth  = iconSize + 16
         frameHeight = (iconSize * maxSpells) + (spacing * (maxSpells - 1)) + 16
     else
-        frameWidth = (iconSize * maxSpells) + (spacing * (maxSpells - 1)) + 16
+        frameWidth  = (iconSize * maxSpells) + (spacing * (maxSpells - 1)) + 16
         frameHeight = iconSize + 16
     end
     mainFrame:SetSize(frameWidth, frameHeight)
 
-    -- Hide all icons first
-    for _, icon in pairs(iconPool) do
-        icon:Hide()
-    end
+    for _, icon in pairs(iconPool) do icon:Hide() end
 
-    -- Display spell icons
     local displayCount = math.min(#self.history, maxSpells)
-    local isReversed = SpellHistoryDB.growDirection == "reverse"
-
     for i = 1, displayCount do
         local spellData = self.history[i]
         local icon = GetIcon(i)
 
-        -- Position icon based on orientation and grow direction
         icon:ClearAllPoints()
+        icon:SetSize(iconSize, iconSize)
+
         if isVertical then
             if isReversed then
-                -- Grow upward (newest at bottom)
                 local yPos = 8 + ((i - 1) * (iconSize + spacing))
                 icon:SetPoint("BOTTOM", mainFrame, "BOTTOM", 0, yPos)
             else
-                -- Grow downward (newest at top) - default
                 local yPos = -8 - ((i - 1) * (iconSize + spacing))
                 icon:SetPoint("TOP", mainFrame, "TOP", 0, yPos)
             end
         else
             if isReversed then
-                -- Grow leftward (newest at right)
                 local xPos = -8 - ((i - 1) * (iconSize + spacing))
                 icon:SetPoint("RIGHT", mainFrame, "RIGHT", xPos, 0)
             else
-                -- Grow rightward (newest at left) - default
                 local xPos = 8 + ((i - 1) * (iconSize + spacing))
                 icon:SetPoint("LEFT", mainFrame, "LEFT", xPos, 0)
             end
         end
-        icon:SetSize(iconSize, iconSize)
 
-        -- Set spell texture
         icon.texture:SetTexture(spellData.icon)
-
-        -- Show/hide interrupted overlay
-        if spellData.interrupted then
-            icon.overlay:Show()
-        else
-            icon.overlay:Hide()
-        end
-
-        -- Store spell data for tooltip
+        if spellData.interrupted then icon.overlay:Show() else icon.overlay:Hide() end
         icon.spellData = spellData
-
         icon:Show()
     end
 end
@@ -301,15 +285,14 @@ end
 --------------------------------------------------------------------------------
 local function IsProfessionSpell(spellID)
     local spellInfo = C_Spell.GetSpellInfo(spellID)
-    if not spellInfo then return false end
+    if not spellInfo or not spellInfo.name then return false end
 
-    -- Check if spell is a profession recipe
+    -- Not all spells are recipes; this can be nil often (safe).
     local recipeInfo = C_TradeSkillUI.GetRecipeInfo(spellID)
     if recipeInfo and recipeInfo.learned then
         return true
     end
 
-    -- Check spell name for common profession keywords
     local professionKeywords = {
         "Blacksmithing", "Schmiedekunst",
         "Alchemy", "Alchemie",
@@ -339,32 +322,49 @@ local function IsProfessionSpell(spellID)
 end
 
 --------------------------------------------------------------------------------
--- Spell History Management
+-- Tracking (ONLY pressed spells)
 --------------------------------------------------------------------------------
--- Track active empowered casts to avoid duplicates from SUCCEEDED events
-local activeEmpowerCast = nil -- { spellID, castGUID }
--- Track recently added spells by spellID to handle any remaining duplicates
-local recentSpells = {}
-local DEDUP_TIME = 0.3 -- Same spell within 0.3 seconds is considered duplicate
+-- We only accept spells that had UNIT_SPELLCAST_SENT from the player.
+local sentCasts = {}     -- castGUID -> { spellID, t }
+local recentCasts = {}   -- castGUID -> t  (dedup)
+local activeEmpowerGUID = nil
+
+local DEDUP_TIME = 2.0
 local CLEANUP_INTERVAL = 30
+local MAX_TRACK_AGE = 10
 local lastCleanupTime = 0
 
 local function CleanupTracking()
     local now = GetTime()
-    if now - lastCleanupTime < CLEANUP_INTERVAL then
-        return
-    end
+    if now - lastCleanupTime < CLEANUP_INTERVAL then return end
     lastCleanupTime = now
 
-    -- Clean up old spell entries
-    for spellID, timestamp in pairs(recentSpells) do
-        if now - timestamp > 5 then
-            recentSpells[spellID] = nil
+    for guid, v in pairs(sentCasts) do
+        if now - v.t > MAX_TRACK_AGE then
+            sentCasts[guid] = nil
+        end
+    end
+
+    for guid, t in pairs(recentCasts) do
+        if now - t > MAX_TRACK_AGE then
+            recentCasts[guid] = nil
         end
     end
 end
 
-function SpellHistory:AddSpell(spellID, spellName, icon, interrupted)
+local function MarkHandled(castGUID)
+    if not castGUID then return end
+    sentCasts[castGUID] = nil
+end
+
+--------------------------------------------------------------------------------
+-- Spell History Management
+--------------------------------------------------------------------------------
+local BACK_TO_BACK_TIME = 0.6
+
+function SpellHistory:AddSpell(spellID, spellName, icon, interrupted, castGUID)
+    if not SpellHistoryDB or not spellID then return end
+
     -- Filter profession spells if enabled
     if SpellHistoryDB.hideProfessions and IsProfessionSpell(spellID) then
         return
@@ -372,27 +372,37 @@ function SpellHistory:AddSpell(spellID, spellName, icon, interrupted)
 
     local now = GetTime()
 
-    -- Check: Same spellID within short time window
-    local lastCastTime = recentSpells[spellID]
-    if lastCastTime and (now - lastCastTime) < DEDUP_TIME then
-        return -- Same spell cast too recently
+    -- Dedup by castGUID (same cast/event spam)
+    if castGUID then
+        local last = recentCasts[castGUID]
+        if last and (now - last) < DEDUP_TIME then
+            return
+        end
+        recentCasts[castGUID] = now
     end
-    recentSpells[spellID] = now
 
-    -- Periodic cleanup of old entries
+    -- Back-to-back dedup (same spell inserted multiple times with different GUIDs)
+    local lastEntry = self.history[1]
+    if lastEntry
+        and lastEntry.spellID == spellID
+        and lastEntry.interrupted == interrupted
+        and (now - lastEntry.timestamp) < BACK_TO_BACK_TIME
+    then
+        return
+    end
+
     CleanupTracking()
 
-    -- Insert at beginning of history
     table.insert(self.history, 1, {
         spellID = spellID,
         spellName = spellName,
         icon = icon,
         interrupted = interrupted,
-        timestamp = now
+        timestamp = now,
+        castGUID = castGUID,
     })
 
-    -- Trim history to max size
-    while #self.history > SpellHistoryDB.maxSpells * 2 do
+    while #self.history > (SpellHistoryDB.maxSpells * 2) do
         table.remove(self.history)
     end
 
@@ -403,14 +413,20 @@ end
 -- Event Handling
 --------------------------------------------------------------------------------
 local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("ADDON_LOADED")
+
+-- Core filter: pressed spells
+eventFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
+
+-- Result events
 eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+
+-- Empower handling (still pressed, but completion can be better represented here)
 eventFrame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
-eventFrame:RegisterEvent("ADDON_LOADED")
 
--- Event dispatcher
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
         local loadedAddon = ...
@@ -427,59 +443,89 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 SpellHistoryDB.position.y
             )
 
-            -- Apply saved settings
             SpellHistory:UpdateLockState()
             SpellHistory:UpdateVisuals()
             SpellHistory:UpdateDisplay()
 
             print("|cFF00FF00Spell History|r " .. L.ADDON_LOADED)
         end
+        return
+    end
 
-    elseif event == "UNIT_SPELLCAST_EMPOWER_START" then
-        local unit, castGUID, spellID = ...
-        if unit == "player" and spellID then
-            -- Track that we're in an empowered cast
-            activeEmpowerCast = { spellID = spellID, castGUID = castGUID }
+    --------------------------------------------------------------------------
+    -- UNIT_SPELLCAST_SENT (pressed)
+    -- Args (modern): unit, target, castGUID, spellID
+    --------------------------------------------------------------------------
+    if event == "UNIT_SPELLCAST_SENT" then
+        local unit, target, castGUID, spellID = ...
+        if unit ~= "player" or not castGUID or not spellID then return end
+
+        sentCasts[castGUID] = { spellID = spellID, t = GetTime() }
+        dbg(event, unit, castGUID, spellID, "SENT")
+        CleanupTracking()
+        return
+    end
+
+    --------------------------------------------------------------------------
+    -- All remaining events share: unit, castGUID, spellID
+    --------------------------------------------------------------------------
+    local unit, castGUID, spellID = ...
+    if unit ~= "player" or not SpellHistoryDB or not spellID then return end
+
+    dbg(event, unit, castGUID, spellID)
+
+    -- Ignore anything that was NOT pressed (no SENT)
+    local sent = castGUID and sentCasts[castGUID]
+    if not sent then
+        -- Not player-initiated => ignore (procs/triggers)
+        return
+    end
+
+    -- Empower start/stop bookkeeping (still pressed spell)
+    if event == "UNIT_SPELLCAST_EMPOWER_START" then
+        activeEmpowerGUID = castGUID
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+        -- For empowered casts, log completion here (more reliable than SUCCEEDED ordering)
+        local info = C_Spell.GetSpellInfo(spellID)
+        if info then
+            SpellHistory:AddSpell(spellID, info.name, info.iconID, false, castGUID)
+        end
+        MarkHandled(castGUID)
+        if activeEmpowerGUID == castGUID then activeEmpowerGUID = nil end
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        -- If this was an empowered cast, we prefer EMPOWER_STOP to log it.
+        if activeEmpowerGUID == castGUID then
+            return
         end
 
-    elseif event == "UNIT_SPELLCAST_EMPOWER_STOP" then
-        local unit, castGUID, spellID = ...
-        if unit == "player" and SpellHistoryDB and spellID then
-            -- Empowered cast completed - add to history
-            local spellInfo = C_Spell.GetSpellInfo(spellID)
-            if spellInfo then
-                SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, false)
-            end
-            activeEmpowerCast = nil
+        local info = C_Spell.GetSpellInfo(spellID)
+        if info then
+            SpellHistory:AddSpell(spellID, info.name, info.iconID, false, castGUID)
+        end
+        MarkHandled(castGUID)
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_FAILED" then
+        if not SpellHistoryDB.showInterrupted then
+            MarkHandled(castGUID)
+            if activeEmpowerGUID == castGUID then activeEmpowerGUID = nil end
+            return
         end
 
-    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local unit, castGUID, spellID = ...
-        -- Only process player spells and ensure DB is initialized
-        if unit == "player" and SpellHistoryDB and spellID then
-            -- Skip if this is part of an active empowered cast (handled by EMPOWER_STOP)
-            if activeEmpowerCast and activeEmpowerCast.spellID == spellID then
-                return
-            end
-            local spellInfo = C_Spell.GetSpellInfo(spellID)
-            if spellInfo then
-                SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, false)
-            end
+        local info = C_Spell.GetSpellInfo(spellID)
+        if info then
+            SpellHistory:AddSpell(spellID, info.name, info.iconID, true, castGUID)
         end
-
-    elseif event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_FAILED" then
-        local unit, castGUID, spellID = ...
-        -- Only process player spells and ensure DB is initialized
-        if unit == "player" and SpellHistoryDB and SpellHistoryDB.showInterrupted and spellID then
-            -- Clear empowered cast tracking if interrupted
-            if activeEmpowerCast and activeEmpowerCast.spellID == spellID then
-                activeEmpowerCast = nil
-            end
-            local spellInfo = C_Spell.GetSpellInfo(spellID)
-            if spellInfo then
-                SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, true)
-            end
-        end
+        MarkHandled(castGUID)
+        if activeEmpowerGUID == castGUID then activeEmpowerGUID = nil end
+        return
     end
 end)
 
@@ -488,18 +534,27 @@ end)
 --------------------------------------------------------------------------------
 SLASH_SPELLHISTORY1 = "/spellhistory"
 SLASH_SPELLHISTORY2 = "/sh"
+
 SlashCmdList["SPELLHISTORY"] = function(msg)
+    msg = (msg or ""):lower()
+
     if msg == "clear" then
         SpellHistory.history = {}
         SpellHistory:UpdateDisplay()
         print("|cFF00FF00Spell History|r: " .. L.HISTORY_CLEARED)
-    elseif msg == "config" or msg == "" then
+        return
+    end
+
+    if msg == "config" or msg == "" then
         if SpellHistory.settingsCategory then
             Settings.OpenToCategory(SpellHistory.settingsCategory:GetID())
+        else
+            print("|cFF00FF00Spell History|r: (no settings panel registered)")
         end
-    else
-        print("|cFF00FF00Spell History|r " .. L.CMD_HELP)
-        print("/spellhistory - " .. L.CMD_CONFIG)
-        print("/spellhistory clear - " .. L.CMD_CLEAR)
+        return
     end
+
+    print("|cFF00FF00Spell History|r " .. L.CMD_HELP)
+    print("/spellhistory - " .. L.CMD_CONFIG)
+    print("/spellhistory clear - " .. L.CMD_CLEAR)
 end
