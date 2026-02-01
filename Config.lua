@@ -25,6 +25,8 @@ if locale == "deDE" then
     CL.SHOW_BORDER_DESC = "Zeigt einen Rahmen um das Fenster an"
     CL.BG_ALPHA = "Hintergrund-Transparenz"
     CL.BG_ALPHA_DESC = "Legt die Transparenz des Hintergrunds fest (0 = durchsichtig, 1 = undurchsichtig)"
+    CL.VERTICAL_ORIENTATION = "Vertikale Ausrichtung"
+    CL.VERTICAL_ORIENTATION_DESC = "Zeigt die Icons vertikal statt horizontal an"
     CL.RESET_POSITION = "Position zurücksetzen"
     CL.RESET_POSITION_DESC = "Setzt die Position des Fensters auf die Bildschirmmitte zurück"
     CL.CLEAR_HISTORY = "Historie löschen"
@@ -42,6 +44,8 @@ else -- English
     CL.SHOW_BORDER_DESC = "Shows a border around the frame"
     CL.BG_ALPHA = "Background Transparency"
     CL.BG_ALPHA_DESC = "Sets background transparency (0 = transparent, 1 = opaque)"
+    CL.VERTICAL_ORIENTATION = "Vertical Orientation"
+    CL.VERTICAL_ORIENTATION_DESC = "Displays icons vertically instead of horizontally"
     CL.RESET_POSITION = "Reset Position"
     CL.RESET_POSITION_DESC = "Resets the frame position to screen center"
     CL.CLEAR_HISTORY = "Clear History"
@@ -289,6 +293,34 @@ do
     )
 
     Settings.CreateCheckbox(category, setting, L.HIDE_PROFESSIONS_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Vertical Orientation Checkbox
+--------------------------------------------------------------------------------
+do
+    local defaultValue = false
+
+    local function GetValue()
+        return SpellHistoryDB.verticalOrientation
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.verticalOrientation = value
+        SpellHistory:UpdateDisplay()
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_VERTICAL_ORIENTATION",
+        Settings.VarType.Boolean,
+        CL.VERTICAL_ORIENTATION,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    Settings.CreateCheckbox(category, setting, CL.VERTICAL_ORIENTATION_DESC)
 end
 
 --------------------------------------------------------------------------------

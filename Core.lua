@@ -27,6 +27,8 @@ if locale == "deDE" then
     L.SHOW_INTERRUPTED_DESC = "Zeigt abgebrochene/fehlgeschlagene Zauber in der Historie an"
     L.HIDE_PROFESSIONS = "Berufe-Zauber ausblenden"
     L.HIDE_PROFESSIONS_DESC = "Blendet Zauber von Berufen (Schmiedekunst, Alchemie, etc.) aus"
+    L.ORIENTATION_VERTICAL = "Vertikale Ausrichtung"
+    L.ORIENTATION_VERTICAL_DESC = "Zeigt die Icons vertikal statt horizontal an"
     L.CMD_HELP = "Befehle:"
     L.CMD_CONFIG = "Öffnet Einstellungen"
     L.CMD_CLEAR = "Löscht Historie"
@@ -40,6 +42,8 @@ else -- Default English
     L.SHOW_INTERRUPTED_DESC = "Shows interrupted/failed spells in the history"
     L.HIDE_PROFESSIONS = "Hide Profession Spells"
     L.HIDE_PROFESSIONS_DESC = "Hides spells from professions (Blacksmithing, Alchemy, etc.)"
+    L.ORIENTATION_VERTICAL = "Vertical Orientation"
+    L.ORIENTATION_VERTICAL_DESC = "Displays icons vertically instead of horizontally"
     L.CMD_HELP = "Commands:"
     L.CMD_CONFIG = "Opens settings"
     L.CMD_CLEAR = "Clears history"
@@ -59,6 +63,7 @@ local defaults = {
     backgroundAlpha = 0.5,
     showInterrupted = true,
     hideProfessions = true,
+    verticalOrientation = false,
     position = {
         point = "CENTER",
         x = 0,
@@ -222,9 +227,44 @@ function SpellHistory:UpdateDisplay()
     local spacing = SpellHistoryDB.spacing
     local maxSpells = SpellHistoryDB.maxSpells
 
-    -- Calculate and set frame width
-    local frameWidth = (iconSize * maxSpells) + (spacing * (maxSpells - 1)) + 16
-    mainFrame:SetSize(frameWidth, iconSize + 16)
+    -- CRITICAL: Remove duplicates from history BEFORE displaying
+    -- This is the final safety net to prevent duplicate display
+    local seen = {}
+    local cleanedHistory = {}
+    local now = GetTime()
+    local DEDUP_TIME = 1.0
+    
+    for i = 1, #self.history do
+        local spell = self.history[i]
+        if spell then
+            local key = spell.spellID .. "_" .. (spell.interrupted and "1" or "0")
+            local timeSince = now - spell.timestamp
+            
+            -- Only add if not seen recently (within 1 second)
+            if not seen[key] or (timeSince >= DEDUP_TIME) then
+                if timeSince < DEDUP_TIME then
+                    seen[key] = true
+                end
+                table.insert(cleanedHistory, spell)
+            end
+        end
+    end
+    
+    -- Replace history with cleaned version
+    self.history = cleanedHistory
+
+    -- Calculate and set frame size based on orientation
+    local isVertical = SpellHistoryDB.verticalOrientation
+    local frameWidth, frameHeight
+
+    if isVertical then
+        frameWidth = iconSize + 16
+        frameHeight = (iconSize * maxSpells) + (spacing * (maxSpells - 1)) + 16
+    else
+        frameWidth = (iconSize * maxSpells) + (spacing * (maxSpells - 1)) + 16
+        frameHeight = iconSize + 16
+    end
+    mainFrame:SetSize(frameWidth, frameHeight)
 
     -- Hide all icons first
     for _, icon in pairs(iconPool) do
@@ -238,9 +278,15 @@ function SpellHistory:UpdateDisplay()
         local spellData = self.history[i]
         local icon = GetIcon(i)
 
-        -- Position icon
-        local xPos = 8 + ((i - 1) * (iconSize + spacing))
-        icon:SetPoint("LEFT", mainFrame, "LEFT", xPos, 0)
+        -- Position icon based on orientation
+        icon:ClearAllPoints()
+        if isVertical then
+            local yPos = -8 - ((i - 1) * (iconSize + spacing))
+            icon:SetPoint("TOP", mainFrame, "TOP", 0, yPos)
+        else
+            local xPos = 8 + ((i - 1) * (iconSize + spacing))
+            icon:SetPoint("LEFT", mainFrame, "LEFT", xPos, 0)
+        end
         icon:SetSize(iconSize, iconSize)
 
         -- Set spell texture
@@ -305,10 +351,36 @@ end
 --------------------------------------------------------------------------------
 -- Spell History Management
 --------------------------------------------------------------------------------
+-- Simple tracking of recently added spells to prevent duplicates
+local lastAddedSpell = nil
+local lastAddedTime = 0
+
 function SpellHistory:AddSpell(spellID, spellName, icon, interrupted)
     -- Filter profession spells if enabled
     if SpellHistoryDB.hideProfessions and IsProfessionSpell(spellID) then
         return
+    end
+
+    local now = GetTime()
+    local DEDUP_TIME = 1.5 -- Prevent same spell within 1.5 seconds
+    
+    -- Check if this exact spell was just added (fastest check)
+    if lastAddedSpell and 
+       lastAddedSpell.spellID == spellID and 
+       lastAddedSpell.interrupted == interrupted and
+       (now - lastAddedTime) < DEDUP_TIME then
+        return -- Duplicate, skip immediately
+    end
+    
+    -- Check first few entries in history for duplicates (most common case)
+    for i = 1, math.min(5, #self.history) do
+        local spell = self.history[i]
+        if spell and spell.spellID == spellID and spell.interrupted == interrupted then
+            local timeSince = now - spell.timestamp
+            if timeSince < DEDUP_TIME then
+                return -- Duplicate found in history, skip
+            end
+        end
     end
 
     -- Insert at beginning of history
@@ -317,11 +389,18 @@ function SpellHistory:AddSpell(spellID, spellName, icon, interrupted)
         spellName = spellName,
         icon = icon,
         interrupted = interrupted,
-        timestamp = GetTime()
+        timestamp = now
     })
 
+    -- Update last added tracking IMMEDIATELY to prevent race conditions
+    lastAddedSpell = {
+        spellID = spellID,
+        interrupted = interrupted
+    }
+    lastAddedTime = now
+
     -- Trim history to max size
-    while #self.history > SpellHistoryDB.maxSpells do
+    while #self.history > SpellHistoryDB.maxSpells * 2 do
         table.remove(self.history)
     end
 
@@ -336,35 +415,6 @@ eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_FAILED")
 eventFrame:RegisterEvent("ADDON_LOADED")
-
--- Duplicate cast prevention
-local processedCasts = {}
-local CLEANUP_INTERVAL = 5
-local lastCleanup = 0
-
-local function HasProcessedCast(castGUID, spellID, interrupted)
-    -- Use castGUID as unique key (WoW guarantees uniqueness)
-    local key = castGUID or (spellID .. "_" .. tostring(interrupted) .. "_" .. GetTime())
-
-    if processedCasts[key] then
-        return true
-    end
-
-    processedCasts[key] = GetTime()
-
-    -- Periodic cleanup to prevent memory leak
-    local now = GetTime()
-    if now - lastCleanup > CLEANUP_INTERVAL then
-        for k, timestamp in pairs(processedCasts) do
-            if now - timestamp > CLEANUP_INTERVAL then
-                processedCasts[k] = nil
-            end
-        end
-        lastCleanup = now
-    end
-
-    return false
-end
 
 -- Event dispatcher
 eventFrame:SetScript("OnEvent", function(self, event, ...)
@@ -393,23 +443,23 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         local unit, castGUID, spellID = ...
-        if unit == "player" then
-            if not HasProcessedCast(castGUID, spellID, false) then
-                local spellInfo = C_Spell.GetSpellInfo(spellID)
-                if spellInfo then
-                    SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, false)
-                end
+        -- Only process player spells and ensure DB is initialized
+        if unit == "player" and SpellHistoryDB and spellID then
+            local spellInfo = C_Spell.GetSpellInfo(spellID)
+            if spellInfo then
+                -- AddSpell handles all duplicate prevention internally
+                SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, false)
             end
         end
 
     elseif event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_FAILED" then
         local unit, castGUID, spellID = ...
-        if unit == "player" and SpellHistoryDB.showInterrupted then
-            if not HasProcessedCast(castGUID, spellID, true) then
-                local spellInfo = C_Spell.GetSpellInfo(spellID)
-                if spellInfo then
-                    SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, true)
-                end
+        -- Only process player spells and ensure DB is initialized
+        if unit == "player" and SpellHistoryDB and SpellHistoryDB.showInterrupted and spellID then
+            local spellInfo = C_Spell.GetSpellInfo(spellID)
+            if spellInfo then
+                -- AddSpell handles all duplicate prevention internally
+                SpellHistory:AddSpell(spellID, spellInfo.name, spellInfo.iconID, true)
             end
         end
     end
