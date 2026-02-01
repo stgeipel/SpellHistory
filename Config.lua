@@ -27,6 +27,14 @@ if locale == "deDE" then
     CL.BG_ALPHA_DESC = "Legt die Transparenz des Hintergrunds fest (0 = durchsichtig, 1 = undurchsichtig)"
     CL.VERTICAL_ORIENTATION = "Vertikale Ausrichtung"
     CL.VERTICAL_ORIENTATION_DESC = "Zeigt die Icons vertikal statt horizontal an"
+    CL.GROW_DIRECTION = "Wachstumsrichtung"
+    CL.GROW_DIRECTION_DESC = "Richtung in die neue Icons hinzugefügt werden"
+    CL.GROW_NORMAL = "Normal"
+    CL.GROW_NORMAL_DESC_H = "Links nach Rechts (neueste links)"
+    CL.GROW_NORMAL_DESC_V = "Oben nach Unten (neueste oben)"
+    CL.GROW_REVERSE = "Umgekehrt"
+    CL.GROW_REVERSE_DESC_H = "Rechts nach Links (neueste rechts)"
+    CL.GROW_REVERSE_DESC_V = "Unten nach Oben (neueste unten)"
     CL.RESET_POSITION = "Position zurücksetzen"
     CL.RESET_POSITION_DESC = "Setzt die Position des Fensters auf die Bildschirmmitte zurück"
     CL.CLEAR_HISTORY = "Historie löschen"
@@ -46,6 +54,14 @@ else -- English
     CL.BG_ALPHA_DESC = "Sets background transparency (0 = transparent, 1 = opaque)"
     CL.VERTICAL_ORIENTATION = "Vertical Orientation"
     CL.VERTICAL_ORIENTATION_DESC = "Displays icons vertically instead of horizontally"
+    CL.GROW_DIRECTION = "Grow Direction"
+    CL.GROW_DIRECTION_DESC = "Direction in which new icons are added"
+    CL.GROW_NORMAL = "Normal"
+    CL.GROW_NORMAL_DESC_H = "Left to Right (newest on left)"
+    CL.GROW_NORMAL_DESC_V = "Top to Bottom (newest on top)"
+    CL.GROW_REVERSE = "Reverse"
+    CL.GROW_REVERSE_DESC_H = "Right to Left (newest on right)"
+    CL.GROW_REVERSE_DESC_V = "Bottom to Top (newest on bottom)"
     CL.RESET_POSITION = "Reset Position"
     CL.RESET_POSITION_DESC = "Resets the frame position to screen center"
     CL.CLEAR_HISTORY = "Clear History"
@@ -324,6 +340,48 @@ do
 end
 
 --------------------------------------------------------------------------------
+-- Setting: Grow Direction Dropdown
+--------------------------------------------------------------------------------
+do
+    local function GetValue()
+        return SpellHistoryDB.growDirection == "reverse" and 2 or 1
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.growDirection = value == 2 and "reverse" or "normal"
+        SpellHistory:UpdateDisplay()
+    end
+
+    local function GetOptions()
+        local container = Settings.CreateControlTextContainer()
+        -- Dynamic description based on current orientation
+        local isVertical = SpellHistoryDB and SpellHistoryDB.verticalOrientation
+        if isVertical then
+            container:Add(1, CL.GROW_NORMAL, CL.GROW_NORMAL_DESC_V)
+            container:Add(2, CL.GROW_REVERSE, CL.GROW_REVERSE_DESC_V)
+        else
+            container:Add(1, CL.GROW_NORMAL, CL.GROW_NORMAL_DESC_H)
+            container:Add(2, CL.GROW_REVERSE, CL.GROW_REVERSE_DESC_H)
+        end
+        return container:GetData()
+    end
+
+    local defaultValue = 1
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_GROW_DIRECTION",
+        Settings.VarType.Number,
+        CL.GROW_DIRECTION,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    Settings.CreateDropdown(category, setting, GetOptions, CL.GROW_DIRECTION_DESC)
+end
+
+--------------------------------------------------------------------------------
 -- Button: Reset Position
 --------------------------------------------------------------------------------
 do
@@ -368,3 +426,6 @@ end
 -- Register Category
 --------------------------------------------------------------------------------
 Settings.RegisterAddOnCategory(category)
+
+-- Store category for slash command access
+SpellHistory.settingsCategory = category

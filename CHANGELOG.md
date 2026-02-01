@@ -2,6 +2,22 @@
 
 All notable changes to Spell History will be documented in this file.
 
+## [1.1.0] - 2026-02-01
+
+### Added
+
+- **Vertical Orientation**: New option to display the spell bar vertically instead of horizontally
+- **Grow Direction**: New setting to control which direction new spells are added
+  - Horizontal: Left to Right or Right to Left
+  - Vertical: Top to Bottom or Bottom to Top
+- Full German and English localization for all new settings
+
+### Changed
+
+- Settings panel now includes orientation and grow direction options
+
+---
+
 ## [1.0.0] - 2025-11-27
 
 ### Added
