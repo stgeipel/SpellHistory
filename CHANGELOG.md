@@ -2,7 +2,7 @@
 
 All notable changes to Spell History will be documented in this file.
 
-## [1.2.0] - 2026-02-01
+## v1.2.0
 
 ### Improvements
 
@@ -17,7 +17,7 @@ Improved duplicate prevention system
 - Resolved an issue where certain spells were incorrectly duplicated in the history
 - Enhanced the deduplication logic to better handle edge cases
 
-## [1.1.0] - 2026-02-01
+## v1.1.0
 
 ### Added
 
@@ -33,7 +33,7 @@ Improved duplicate prevention system
 
 ---
 
-## [1.0.0] - 2025-11-27
+## v1.0.0
 
 ### Added
 
