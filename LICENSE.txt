@@ -1,0 +1,18 @@
+Custom License – WoW Addon
+
+Copyright (c) 2026 stgeipel
+
+Permission is granted to download and use this addon for personal use.
+
+You may modify the source code for your own private use.
+
+You are NOT allowed to:
+- Redistribute this addon
+- Publish modified versions
+- Copy and re-upload the code
+- Include this addon in other projects
+- Sell or place it behind a paywall
+
+Any form of public distribution is prohibited.
+
+This software is provided "as is", without warranty of any kind.
