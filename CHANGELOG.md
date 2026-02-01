@@ -2,6 +2,21 @@
 
 All notable changes to Spell History will be documented in this file.
 
+## [1.2.0] - 2026-05-15
+
+### Improvements
+
+- **Only player-initiated spells** are now tracked
+  SpellHistory now displays only spells that were actively cast by the player.
+  Internal trigger, proc, or follow-up spells (e.g. Living Flame triggered by Chrono Flames) are no longer recorded.
+
+### Bug Fixes
+
+Improved duplicate prevention system
+
+- Resolved an issue where certain spells were incorrectly duplicated in the history
+- Enhanced the deduplication logic to better handle edge cases
+
 ## [1.1.0] - 2026-02-01
 
 ### Added
