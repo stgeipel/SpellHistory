@@ -63,45 +63,34 @@ Animation.Modes = {
 function Animation:CalculateConveyor(spellData, spellIndex, now, settings)
     local age = spellData.timestamp and (now - spellData.timestamp) or 999
     local duration = settings.animationDuration or 8.0
-    local fadeStart = settings.animationFadeStart or 0.5
     local iconAlpha = settings.iconAlpha or 1.0
     local iconSize = settings.iconSize or 40
     local spacing = settings.spacing or 5
     local maxSpells = settings.maxSpells or 10
 
-    -- Total travel distance
-    local totalDistance = (iconSize * maxSpells) + (spacing * (maxSpells - 1))
     local slotSize = iconSize + spacing
 
-    -- (Run until icon is fully off screen)
-    -- Calculate progress (0 to 1) based on duration
+    -- Visible Area: Slots * maxSpells (so that it really drives "to the end")
+    local visibleDistance = slotSize * maxSpells
+
+    -- Total path: through the visible area + icon width (so it's completely out)
+    local travelDistance = visibleDistance + iconSize
+
     local progress = age / duration
-    
-    -- Apply conveyor easing
-    local easedProgress = self.Easing.Conveyor(progress)
+    if progress < 0 then progress = 0 end
 
-    -- Base position from easing
-    local basePos = easedProgress * totalDistance
-
-    -- Use base position directly for smooth conveyor movement
-    local animatedPos = basePos
-    
-    -- Check if icon has fully left the visible area
-    -- (totalDistance + iconSize to ensure it clears the frame/padding)
-    if animatedPos > (totalDistance + iconSize + 20) then
+    -- After expiry: don't show anymore
+    if progress >= 1 then
         return false, 0, 0
     end
 
-    -- Calculate alpha:
-    -- 1. Fade In: Thread in/fade in up to half the icon size (0 to 0.5*size)
-    -- 2. "Drive out": Full opacity after that
-    -- 3. No Fade Out at the end (User request: "remove fade in fade out")
-    
+    local easedProgress = self.Easing.Conveyor(progress)
+    local animatedPos = easedProgress * travelDistance
+
+    -- Optional: small fade in at the beginning over distance
     local currentAlpha = iconAlpha
     local fadeInDist = iconSize * 0.5
-    
     if animatedPos < fadeInDist then
-        -- Fade in (0 to 1) based on distance covered
         currentAlpha = (animatedPos / fadeInDist) * iconAlpha
     end
 
