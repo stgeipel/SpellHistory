@@ -6,14 +6,10 @@ ignore:
   - README.md
   - .github
   - .gitignore
-  - LICENSE
-  - LICENSE.txt
   - .pkgmeta
   - README.md
-  - CHANGELOG.md
   - screenshot1.jpg
   - screenshot2.jpg
-  - SpellHistory.png
 
 manual-changelog:
   filename: CHANGELOG.md
