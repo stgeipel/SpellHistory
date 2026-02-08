@@ -2,7 +2,7 @@
 
 All notable changes to Spell History will be documented in this file.
 
-## v1.4.0 (Experimental)
+## v1.4.0
 
 ### Added
 
@@ -14,18 +14,13 @@ All notable changes to Spell History will be documented in this file.
   - **Fade In/Out Mode**: Classic fade animation
     - Icons fade in, stay visible, then fade out
     - Configurable fade in/out durations and display time
+  - **Slide In/Out Mode**: Classic Slide animation
+    - Icons slide in, stay visible, then slide out
+    - Configurable slide in/out durations and display time
 - New animation settings in the config panel:
-  - Animation Mode selector (Conveyor Belt / Fade In/Out)
+  - Animation Mode selector (Conveyor Belt / Fade In/Out / Slide In/Out)
   - Conveyor Belt settings: Travel duration, Fade start point
   - Fade settings: Fade in duration, Display duration, Fade out duration
-
-### Technical
-
-- Refactored animation system into separate `Animation.lua` module
-- Modular design allows easy addition of new animation modes
-- Icons no longer overlap in conveyor mode (automatic push-forward)
-- OnUpdate-based animation with performance optimization (disables when no animations active)
-- Easing functions library for smooth animations
 
 ---
 
