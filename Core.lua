@@ -55,7 +55,7 @@ local defaults = {
     verticalOrientation = false,
     growDirection = "normal",
     -- Animation settings
-    animationEnabled = true,
+    animationEnabled = false,
     animationMode = "conveyor",   -- "none", "conveyor", "fade"
     -- Conveyor mode settings
     animationDuration = 8.0,      -- Total time for spell to travel across the bar
@@ -193,7 +193,7 @@ local function GetIcon(index)
 
     icon.overlay = icon:CreateTexture(nil, "OVERLAY")
     icon.overlay:SetAllPoints(true)
-    icon.overlay:SetColorTexture(1, 0, 0, 0.3)
+    icon.overlay:SetColorTexture(1, 0, 0, 0.4)
     icon.overlay:Hide()
 
     icon:SetScript("OnEnter", function(self)
