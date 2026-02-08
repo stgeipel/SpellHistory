@@ -418,6 +418,7 @@ do
         local mode = SpellHistoryDB.animationMode or "conveyor"
         if mode == "conveyor" then return 1
         elseif mode == "fade" then return 2
+        elseif mode == "slide" then return 3
         else return 1 end
     end
 
@@ -426,6 +427,8 @@ do
             SpellHistoryDB.animationMode = "conveyor"
         elseif value == 2 then
             SpellHistoryDB.animationMode = "fade"
+        elseif value == 3 then
+            SpellHistoryDB.animationMode = "slide"
         end
         SpellHistory:UpdateDisplay()
     end
@@ -434,6 +437,7 @@ do
         local container = Settings.CreateControlTextContainer()
         container:Add(1, L.ANIMATION_MODE_CONVEYOR, L.ANIMATION_MODE_CONVEYOR_DESC)
         container:Add(2, L.ANIMATION_MODE_FADE, L.ANIMATION_MODE_FADE_DESC)
+        container:Add(3, L.ANIMATION_MODE_SLIDE, L.ANIMATION_MODE_SLIDE_DESC)
         return container:GetData()
     end
 
@@ -623,6 +627,37 @@ do
     end)
 
     Settings.CreateSlider(category, setting, options, L.ANIMATION_FADE_OUT_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Drive In/Out Distance Slider
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 0, 2.0, 0.1
+    local defaultValue = 0.5
+
+    local function GetValue()
+        return SpellHistoryDB.animationSlideDist or 0.5
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationSlideDist = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_SLIDE_DIST",
+        Settings.VarType.Number,
+        L.ANIMATION_SLIDE_DIST,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, FormatPercentage)
+
+    Settings.CreateSlider(category, setting, options, L.ANIMATION_SLIDE_DIST_DESC)
 end
 
 --------------------------------------------------------------------------------

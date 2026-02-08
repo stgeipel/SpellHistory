@@ -98,6 +98,14 @@ bg:SetAllPoints(true)
 bg:SetColorTexture(0, 0, 0, 0.5)
 mainFrame.bg = bg
 
+-- Clip children to frame bounds (fixes icons sliding outside background)
+-- Create a content frame to hold icons and clip them strictly
+local contentFrame = CreateFrame("Frame", nil, mainFrame)
+contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, -2)
+contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -2, 2)
+contentFrame:SetClipsChildren(true)
+SpellHistory.contentFrame = contentFrame
+
 -- Border
 mainFrame:SetBackdrop({
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -129,8 +137,12 @@ function SpellHistory:UpdateVisuals()
             insets = { left = 4, right = 4, top = 4, bottom = 4 }
         })
         mainFrame:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+        SpellHistory.contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, -2)
+        SpellHistory.contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -2, 2)
     else
         mainFrame:SetBackdrop(nil)
+        SpellHistory.contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 0, 0)
+        SpellHistory.contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 0, 0)
     end
 end
 
@@ -167,7 +179,7 @@ local iconPool = {}
 local function GetIcon(index)
     if iconPool[index] then return iconPool[index] end
 
-    local icon = CreateFrame("Frame", nil, mainFrame)
+    local icon = CreateFrame("Frame", nil, SpellHistory.contentFrame)
 
     icon.texture = icon:CreateTexture(nil, "ARTWORK")
     icon.texture:SetAllPoints(true)
@@ -272,8 +284,8 @@ function SpellHistory:UpdateDisplay()
     end
 
     -- Process spells through animation system
+    -- (Loop continues beyond maxSpells to allow smooth exit animation)
     for i, spellData in ipairs(self.history) do
-        if displayIndex >= maxSpells then break end
 
         -- Calculate animation state
         local shouldShow, currentAlpha, animatedPos = Animation:Calculate(

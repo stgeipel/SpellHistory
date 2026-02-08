@@ -34,17 +34,9 @@ Animation.Easing = {
         return t * t * t
     end,
 
-    -- Conveyor belt easing (slow first half, accelerating second half)
+    -- Conveyor belt easing (Linear for smooth flow)
     Conveyor = function(t)
-        if t < 0.5 then
-            -- First half: slower movement (cover 30% of distance)
-            return t * 0.6
-        else
-            -- Second half: accelerating movement (cover remaining 70% of distance)
-            local t2 = (t - 0.5) * 2  -- normalize to 0-1
-            local easedT2 = t2 * t2   -- quadratic ease-in (accelerate)
-            return 0.3 + (easedT2 * 0.7)
-        end
+        return t
     end,
 }
 
@@ -56,8 +48,10 @@ Animation.Modes = {
     NONE = "none",
     -- Conveyor belt - icons travel across the bar
     CONVEYOR = "conveyor",
-    -- Fade in/out - icons fade in, stay, then fade out
+    -- Fade in/out - icons fade in, stay, then fade out (static position)
     FADE = "fade",
+    -- Slide in/out - icons slide in, stay, then slide out
+    SLIDE = "slide",
 }
 
 --------------------------------------------------------------------------------
@@ -71,41 +65,44 @@ function Animation:CalculateConveyor(spellData, spellIndex, now, settings)
     local duration = settings.animationDuration or 8.0
     local fadeStart = settings.animationFadeStart or 0.5
     local iconAlpha = settings.iconAlpha or 1.0
-    local iconSize = settings.iconSize
-    local spacing = settings.spacing
-    local maxSpells = settings.maxSpells
+    local iconSize = settings.iconSize or 40
+    local spacing = settings.spacing or 5
+    local maxSpells = settings.maxSpells or 10
 
     -- Total travel distance
     local totalDistance = (iconSize * maxSpells) + (spacing * (maxSpells - 1))
     local slotSize = iconSize + spacing
 
-    -- If animation complete, don't show
-    if age >= duration then
-        return false, 0, 0
-    end
-
-    -- Calculate progress (0 to 1)
+    -- (Run until icon is fully off screen)
+    -- Calculate progress (0 to 1) based on duration
     local progress = age / duration
-
+    
     -- Apply conveyor easing
     local easedProgress = self.Easing.Conveyor(progress)
 
     -- Base position from easing
     local basePos = easedProgress * totalDistance
 
-    -- Calculate minimum position based on previous spells (prevent overlap)
-    -- Each spell needs at least (spellIndex - 1) * slotSize space from start
-    local minPos = (spellIndex - 1) * slotSize
+    -- Use base position directly for smooth conveyor movement
+    local animatedPos = basePos
+    
+    -- Check if icon has fully left the visible area
+    -- (totalDistance + iconSize to ensure it clears the frame/padding)
+    if animatedPos > (totalDistance + iconSize + 20) then
+        return false, 0, 0
+    end
 
-    -- Use the maximum of base position and minimum position
-    local animatedPos = math.max(basePos, minPos)
-
-    -- Calculate alpha - start fading after fadeStart point
+    -- Calculate alpha:
+    -- 1. Fade In: Thread in/fade in up to half the icon size (0 to 0.5*size)
+    -- 2. "Drive out": Full opacity after that
+    -- 3. No Fade Out at the end (User request: "remove fade in fade out")
+    
     local currentAlpha = iconAlpha
-    if progress > fadeStart then
-        local fadeProgress = (progress - fadeStart) / (1.0 - fadeStart)
-        -- Smooth fade (quadratic)
-        currentAlpha = (1 - (fadeProgress * fadeProgress)) * iconAlpha
+    local fadeInDist = iconSize * 0.5
+    
+    if animatedPos < fadeInDist then
+        -- Fade in (0 to 1) based on distance covered
+        currentAlpha = (animatedPos / fadeInDist) * iconAlpha
     end
 
     return true, currentAlpha, animatedPos
@@ -118,8 +115,8 @@ function Animation:CalculateFade(spellData, spellIndex, now, settings)
     local displayDuration = settings.animationDisplayTime or 5.0
     local fadeOutDuration = settings.animationFadeOut or 0.5
     local iconAlpha = settings.iconAlpha or 1.0
-    local iconSize = settings.iconSize
-    local spacing = settings.spacing
+    local iconSize = settings.iconSize or 40
+    local spacing = settings.spacing or 5
 
     local totalVisibleTime = fadeInDuration + displayDuration + fadeOutDuration
 
@@ -130,7 +127,7 @@ function Animation:CalculateFade(spellData, spellIndex, now, settings)
     if age >= totalVisibleTime then
         return false, 0, staticPos
     end
-
+    
     local currentAlpha = iconAlpha
 
     if age < fadeInDuration then
@@ -147,6 +144,59 @@ function Animation:CalculateFade(spellData, spellIndex, now, settings)
     end
 
     return true, currentAlpha, staticPos
+end
+
+-- Slide In/Out Animation (previously "Drive In/Out")
+function Animation:CalculateSlide(spellData, spellIndex, now, settings)
+    local age = spellData.timestamp and (now - spellData.timestamp) or 999
+    local fadeInDuration = settings.animationFadeIn or 0.3
+    local displayDuration = settings.animationDisplayTime or 5.0
+    local fadeOutDuration = settings.animationFadeOut or 0.5
+    local iconAlpha = settings.iconAlpha or 1.0
+    local iconSize = settings.iconSize or 40
+    local spacing = settings.spacing or 5
+
+    local totalVisibleTime = fadeInDuration + displayDuration + fadeOutDuration
+
+    -- Static position based on index (target position)
+    local staticPos = (spellIndex - 1) * (iconSize + spacing)
+
+    -- If animation complete, don't show
+    if age >= totalVisibleTime then
+        return false, 0, staticPos
+    end
+    
+    -- Slide distance for "Drive In/Out" effect (percentage of icon size)
+    local slideDist = (settings.animationSlideDist or 0.5) * iconSize
+    
+    local currentAlpha = iconAlpha
+    local animatingPos = staticPos
+
+    if age < fadeInDuration then
+        -- Fade in + Drive In
+        local progress = age / fadeInDuration
+        local ease = self.Easing.EaseOutQuad(progress)
+        
+        currentAlpha = ease * iconAlpha
+        -- Slide in from (staticPos - slideDist) to staticPos
+        animatingPos = staticPos - ((1 - ease) * slideDist)
+        
+    elseif age < fadeInDuration + displayDuration then
+        -- Display phase - full alpha, static position
+        currentAlpha = iconAlpha
+        animatingPos = staticPos
+        
+    else
+        -- Fade out + Drive Out
+        local fadeOutProgress = (age - fadeInDuration - displayDuration) / fadeOutDuration
+        local ease = self.Easing.EaseInQuad(fadeOutProgress)
+        
+        currentAlpha = (1 - ease) * iconAlpha
+        -- Slide out from staticPos to (staticPos + slideDist)
+        animatingPos = staticPos + (ease * slideDist)
+    end
+
+    return true, currentAlpha, animatingPos
 end
 
 -- No Animation (Static)
@@ -173,7 +223,7 @@ end
 -- Main Animation Calculator
 --------------------------------------------------------------------------------
 function Animation:Calculate(spellData, spellIndex, now, settings)
-    if not settings or not settings.animationEnabled then
+    if settings and settings.animationEnabled == false then
         return self:CalculateNone(spellData, spellIndex, now, settings)
     end
 
@@ -183,6 +233,8 @@ function Animation:Calculate(spellData, spellIndex, now, settings)
         return self:CalculateConveyor(spellData, spellIndex, now, settings)
     elseif mode == "fade" then
         return self:CalculateFade(spellData, spellIndex, now, settings)
+    elseif mode == "slide" then
+        return self:CalculateSlide(spellData, spellIndex, now, settings)
     else
         return self:CalculateNone(spellData, spellIndex, now, settings)
     end
@@ -192,7 +244,7 @@ end
 -- Check if any animations are active
 --------------------------------------------------------------------------------
 function Animation:HasActiveAnimations(history, now, settings)
-    if not settings or not settings.animationEnabled then
+    if settings and settings.animationEnabled == false then
         return false
     end
 
@@ -205,7 +257,7 @@ function Animation:HasActiveAnimations(history, now, settings)
 
             if mode == "conveyor" then
                 maxAge = settings.animationDuration or 8.0
-            elseif mode == "fade" then
+            elseif mode == "fade" or mode == "slide" then
                 maxAge = (settings.animationFadeIn or 0.3) +
                          (settings.animationDisplayTime or 5.0) +
                          (settings.animationFadeOut or 0.5)
@@ -233,7 +285,7 @@ function Animation:StartUpdate()
     animationActive = true
 
     animationFrame:SetScript("OnUpdate", function(self, elapsed)
-        if not SpellHistoryDB or not SpellHistoryDB.animationEnabled then
+        if not SpellHistoryDB or SpellHistoryDB.animationEnabled == false then
             animationActive = false
             self:SetScript("OnUpdate", nil)
             return
