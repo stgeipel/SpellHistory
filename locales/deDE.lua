@@ -57,3 +57,30 @@ L.CLEAR_HISTORY = "Historie löschen"
 L.CLEAR_HISTORY_DESC = "Löscht alle Einträge aus der Spell-Historie"
 L.SHOW_TOOLTIPS = "Tooltips anzeigen"
 L.SHOW_TOOLTIPS_DESC = "Zeigt Zauber-Tooltips beim Überfahren der Icons an"
+
+-- Animation settings
+L.ANIMATION_HEADER = "Animation"
+L.ANIMATION_ENABLED = "Animation aktivieren"
+L.ANIMATION_ENABLED_DESC = "Aktiviert Zauber-Icon Animationen"
+L.ANIMATION_MODE = "Animations-Modus"
+L.ANIMATION_MODE_DESC = "Wähle den Animations-Stil"
+L.ANIMATION_MODE_CONVEYOR = "Förderband"
+L.ANIMATION_MODE_CONVEYOR_DESC = "Icons wandern über die Leiste und blenden am Ende aus"
+L.ANIMATION_MODE_FADE = "Ein-/Ausblenden"
+L.ANIMATION_MODE_FADE_DESC = "Icons blenden ein, bleiben sichtbar und blenden dann aus"
+
+-- Förderband-Modus Einstellungen
+L.ANIMATION_CONVEYOR_HEADER = "Förderband-Einstellungen"
+L.ANIMATION_DURATION = "Laufzeit"
+L.ANIMATION_DURATION_DESC = "Zeit in Sekunden, bis ein Icon die gesamte Leiste durchlaufen hat"
+L.ANIMATION_FADE_START = "Ausblend-Startpunkt"
+L.ANIMATION_FADE_START_DESC = "Position auf der Leiste, ab der Icons ausblenden (50% = Mitte)"
+
+-- Fade-Modus Einstellungen
+L.ANIMATION_FADE_HEADER = "Fade-Einstellungen"
+L.ANIMATION_FADE_IN = "Einblendzeit"
+L.ANIMATION_FADE_IN_DESC = "Zeit in Sekunden für das Einblenden der Icons"
+L.ANIMATION_DISPLAY_TIME = "Anzeigedauer"
+L.ANIMATION_DISPLAY_TIME_DESC = "Zeit in Sekunden, die Icons sichtbar bleiben bevor sie ausblenden"
+L.ANIMATION_FADE_OUT = "Ausblendzeit"
+L.ANIMATION_FADE_OUT_DESC = "Zeit in Sekunden für das Ausblenden der Icons"

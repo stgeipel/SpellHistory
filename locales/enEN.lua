@@ -55,3 +55,30 @@ L.CLEAR_HISTORY = "Clear History"
 L.CLEAR_HISTORY_DESC = "Clears all entries from spell history"
 L.SHOW_TOOLTIPS = "Show Tooltips"
 L.SHOW_TOOLTIPS_DESC = "Shows spell tooltips when hovering over icons"
+
+-- Animation settings
+L.ANIMATION_HEADER = "Animation"
+L.ANIMATION_ENABLED = "Enable Animation"
+L.ANIMATION_ENABLED_DESC = "Enable spell icon animations"
+L.ANIMATION_MODE = "Animation Mode"
+L.ANIMATION_MODE_DESC = "Choose the animation style"
+L.ANIMATION_MODE_CONVEYOR = "Conveyor Belt"
+L.ANIMATION_MODE_CONVEYOR_DESC = "Icons travel across the bar and fade out at the end"
+L.ANIMATION_MODE_FADE = "Fade In/Out"
+L.ANIMATION_MODE_FADE_DESC = "Icons fade in, stay visible, then fade out"
+
+-- Conveyor mode settings
+L.ANIMATION_CONVEYOR_HEADER = "Conveyor Belt Settings"
+L.ANIMATION_DURATION = "Travel Duration"
+L.ANIMATION_DURATION_DESC = "Time in seconds for icons to travel across the entire bar"
+L.ANIMATION_FADE_START = "Fade Start Point"
+L.ANIMATION_FADE_START_DESC = "Position along the bar where icons start fading out (50% = halfway)"
+
+-- Fade mode settings
+L.ANIMATION_FADE_HEADER = "Fade Settings"
+L.ANIMATION_FADE_IN = "Fade In Duration"
+L.ANIMATION_FADE_IN_DESC = "Time in seconds for icons to fade in"
+L.ANIMATION_DISPLAY_TIME = "Display Duration"
+L.ANIMATION_DISPLAY_TIME_DESC = "Time in seconds icons stay visible before fading out"
+L.ANIMATION_FADE_OUT = "Fade Out Duration"
+L.ANIMATION_FADE_OUT_DESC = "Time in seconds for icons to fade out"

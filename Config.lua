@@ -378,6 +378,254 @@ do
 end
 
 --------------------------------------------------------------------------------
+-- Animation Header
+--------------------------------------------------------------------------------
+layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L.ANIMATION_HEADER))
+
+--------------------------------------------------------------------------------
+-- Setting: Animation Enabled Checkbox
+--------------------------------------------------------------------------------
+do
+    local defaultValue = true
+
+    local function GetValue()
+        return SpellHistoryDB.animationEnabled
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationEnabled = value
+        SpellHistory:UpdateDisplay()
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_ENABLED",
+        Settings.VarType.Boolean,
+        L.ANIMATION_ENABLED,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    Settings.CreateCheckbox(category, setting, L.ANIMATION_ENABLED_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Animation Mode Dropdown
+--------------------------------------------------------------------------------
+do
+    local function GetValue()
+        local mode = SpellHistoryDB.animationMode or "conveyor"
+        if mode == "conveyor" then return 1
+        elseif mode == "fade" then return 2
+        else return 1 end
+    end
+
+    local function SetValue(value)
+        if value == 1 then
+            SpellHistoryDB.animationMode = "conveyor"
+        elseif value == 2 then
+            SpellHistoryDB.animationMode = "fade"
+        end
+        SpellHistory:UpdateDisplay()
+    end
+
+    local function GetOptions()
+        local container = Settings.CreateControlTextContainer()
+        container:Add(1, L.ANIMATION_MODE_CONVEYOR, L.ANIMATION_MODE_CONVEYOR_DESC)
+        container:Add(2, L.ANIMATION_MODE_FADE, L.ANIMATION_MODE_FADE_DESC)
+        return container:GetData()
+    end
+
+    local defaultValue = 1
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_MODE",
+        Settings.VarType.Number,
+        L.ANIMATION_MODE,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    Settings.CreateDropdown(category, setting, GetOptions, L.ANIMATION_MODE_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Conveyor Mode Header
+--------------------------------------------------------------------------------
+layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L.ANIMATION_CONVEYOR_HEADER))
+
+--------------------------------------------------------------------------------
+-- Setting: Animation Duration Slider (Conveyor Belt)
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 2, 20, 0.5
+    local defaultValue = 8.0
+
+    local function GetValue()
+        return SpellHistoryDB.animationDuration or 8.0
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationDuration = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_DURATION",
+        Settings.VarType.Number,
+        L.ANIMATION_DURATION,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return string.format("%.1fs", value)
+    end)
+
+    Settings.CreateSlider(category, setting, options, L.ANIMATION_DURATION_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Animation Fade Start Slider (Conveyor)
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 0.3, 0.9, 0.05
+    local defaultValue = 0.5
+
+    local function GetValue()
+        return SpellHistoryDB.animationFadeStart or 0.5
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationFadeStart = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_FADE_START",
+        Settings.VarType.Number,
+        L.ANIMATION_FADE_START,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, FormatPercentage)
+
+    Settings.CreateSlider(category, setting, options, L.ANIMATION_FADE_START_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Fade Mode Header
+--------------------------------------------------------------------------------
+layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L.ANIMATION_FADE_HEADER))
+
+--------------------------------------------------------------------------------
+-- Setting: Fade In Duration Slider
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 0, 2, 0.1
+    local defaultValue = 0.3
+
+    local function GetValue()
+        return SpellHistoryDB.animationFadeIn or 0.3
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationFadeIn = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_FADE_IN",
+        Settings.VarType.Number,
+        L.ANIMATION_FADE_IN,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return string.format("%.1fs", value)
+    end)
+
+    Settings.CreateSlider(category, setting, options, L.ANIMATION_FADE_IN_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Display Duration Slider
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 1, 30, 0.5
+    local defaultValue = 5.0
+
+    local function GetValue()
+        return SpellHistoryDB.animationDisplayTime or 5.0
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationDisplayTime = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_DISPLAY_TIME",
+        Settings.VarType.Number,
+        L.ANIMATION_DISPLAY_TIME,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return string.format("%.1fs", value)
+    end)
+
+    Settings.CreateSlider(category, setting, options, L.ANIMATION_DISPLAY_TIME_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Fade Out Duration Slider
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 0, 3, 0.1
+    local defaultValue = 0.5
+
+    local function GetValue()
+        return SpellHistoryDB.animationFadeOut or 0.5
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.animationFadeOut = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ANIMATION_FADE_OUT",
+        Settings.VarType.Number,
+        L.ANIMATION_FADE_OUT,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return string.format("%.1fs", value)
+    end)
+
+    Settings.CreateSlider(category, setting, options, L.ANIMATION_FADE_OUT_DESC)
+end
+
+--------------------------------------------------------------------------------
 -- Button: Reset Position
 --------------------------------------------------------------------------------
 do

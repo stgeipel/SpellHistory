@@ -54,6 +54,16 @@ local defaults = {
     showTooltips = true,
     verticalOrientation = false,
     growDirection = "normal",
+    -- Animation settings
+    animationEnabled = true,
+    animationMode = "conveyor",   -- "none", "conveyor", "fade"
+    -- Conveyor mode settings
+    animationDuration = 8.0,      -- Total time for spell to travel across the bar
+    animationFadeStart = 0.5,     -- Start fading at 50% of the journey (halfway point)
+    -- Fade mode settings
+    animationFadeIn = 0.3,        -- Seconds to fade in
+    animationDisplayTime = 5.0,   -- Seconds to display at full opacity
+    animationFadeOut = 0.5,       -- Seconds to fade out
     position = { point = "CENTER", x = 0, y = 0 }
 }
 
@@ -144,6 +154,12 @@ mainFrame:SetScript("OnDragStop", function(self)
 end)
 
 --------------------------------------------------------------------------------
+-- Animation System (loaded from Animation.lua)
+--------------------------------------------------------------------------------
+-- Animation module is loaded from Animation.lua
+-- Access via SpellHistory.Animation
+
+--------------------------------------------------------------------------------
 -- Icon Management
 --------------------------------------------------------------------------------
 local iconPool = {}
@@ -193,9 +209,9 @@ end
 function SpellHistory:UpdateDisplay()
     if not SpellHistoryDB then return end
 
-    local iconSize = SpellHistoryDB.iconSize
-    local spacing = SpellHistoryDB.spacing
-    local maxSpells = SpellHistoryDB.maxSpells
+    local iconSize = SpellHistoryDB.iconSize or 40
+    local spacing = SpellHistoryDB.spacing or 5
+    local maxSpells = SpellHistoryDB.maxSpells or 10
     local isVertical = SpellHistoryDB.verticalOrientation
     local isReversed = SpellHistoryDB.growDirection == "reverse"
     local iconAlpha = SpellHistoryDB.iconAlpha or 1.0
@@ -211,39 +227,98 @@ function SpellHistory:UpdateDisplay()
     end
     mainFrame:SetSize(frameWidth, frameHeight)
 
-    for _, icon in pairs(iconPool) do icon:Hide() end
+    -- Hide all icons first
+    for idx, icon in pairs(iconPool) do
+        icon:Hide()
+    end
 
-    local displayCount = math.min(#self.history, maxSpells)
-    for i = 1, displayCount do
-        local spellData = self.history[i]
-        local icon = GetIcon(i)
+    local now = GetTime()
+    local displayIndex = 0
+    local Animation = SpellHistory.Animation
 
-        icon:ClearAllPoints()
-        icon:SetSize(iconSize, iconSize)
+    -- Check if Animation module is loaded
+    if not Animation then
+        -- Fallback: display without animation
+        for i, spellData in ipairs(self.history) do
+            if displayIndex >= maxSpells then break end
+            displayIndex = displayIndex + 1
 
-        if isVertical then
-            if isReversed then
-                local yPos = 8 + ((i - 1) * (iconSize + spacing))
-                icon:SetPoint("BOTTOM", mainFrame, "BOTTOM", 0, yPos)
+            local icon = GetIcon(displayIndex)
+            icon:SetSize(iconSize, iconSize)
+            icon:ClearAllPoints()
+
+            local pos = (displayIndex - 1) * (iconSize + spacing)
+            if isVertical then
+                if isReversed then
+                    icon:SetPoint("BOTTOM", mainFrame, "BOTTOM", 0, 8 + pos)
+                else
+                    icon:SetPoint("TOP", mainFrame, "TOP", 0, -8 - pos)
+                end
             else
-                local yPos = -8 - ((i - 1) * (iconSize + spacing))
-                icon:SetPoint("TOP", mainFrame, "TOP", 0, yPos)
+                if isReversed then
+                    icon:SetPoint("RIGHT", mainFrame, "RIGHT", -8 - pos, 0)
+                else
+                    icon:SetPoint("LEFT", mainFrame, "LEFT", 8 + pos, 0)
+                end
             end
-        else
-            if isReversed then
-                local xPos = -8 - ((i - 1) * (iconSize + spacing))
-                icon:SetPoint("RIGHT", mainFrame, "RIGHT", xPos, 0)
-            else
-                local xPos = 8 + ((i - 1) * (iconSize + spacing))
-                icon:SetPoint("LEFT", mainFrame, "LEFT", xPos, 0)
-            end
+
+            icon:SetAlpha(iconAlpha)
+            icon.texture:SetTexture(spellData.icon)
+            if spellData.interrupted then icon.overlay:Show() else icon.overlay:Hide() end
+            icon.spellData = spellData
+            icon:Show()
         end
+        return
+    end
 
-        icon.texture:SetTexture(spellData.icon)
-        icon.texture:SetAlpha(iconAlpha)
-        if spellData.interrupted then icon.overlay:Show() else icon.overlay:Hide() end
-        icon.spellData = spellData
-        icon:Show()
+    -- Process spells through animation system
+    for i, spellData in ipairs(self.history) do
+        if displayIndex >= maxSpells then break end
+
+        -- Calculate animation state
+        local shouldShow, currentAlpha, animatedPos = Animation:Calculate(
+            spellData,
+            i,  -- Pass original index for overlap prevention
+            now,
+            SpellHistoryDB
+        )
+
+        if shouldShow then
+            displayIndex = displayIndex + 1
+            local icon = GetIcon(displayIndex)
+            icon:SetSize(iconSize, iconSize)
+
+            -- Position the icon based on animated position
+            icon:ClearAllPoints()
+            if isVertical then
+                if isReversed then
+                    -- Bottom to Top: start at bottom, move up
+                    icon:SetPoint("BOTTOM", mainFrame, "BOTTOM", 0, 8 + animatedPos)
+                else
+                    -- Top to Bottom: start at top, move down
+                    icon:SetPoint("TOP", mainFrame, "TOP", 0, -8 - animatedPos)
+                end
+            else
+                if isReversed then
+                    -- Right to Left: start at right, move left
+                    icon:SetPoint("RIGHT", mainFrame, "RIGHT", -8 - animatedPos, 0)
+                else
+                    -- Left to Right: start at left, move right
+                    icon:SetPoint("LEFT", mainFrame, "LEFT", 8 + animatedPos, 0)
+                end
+            end
+
+            icon:SetAlpha(currentAlpha)
+            icon.texture:SetTexture(spellData.icon)
+            if spellData.interrupted then icon.overlay:Show() else icon.overlay:Hide() end
+            icon.spellData = spellData
+            icon:Show()
+        end
+    end
+
+    -- Start animation update loop if needed
+    if Animation:HasActiveAnimations(self.history, now, SpellHistoryDB) then
+        Animation:StartUpdate()
     end
 end
 

@@ -2,6 +2,33 @@
 
 All notable changes to Spell History will be documented in this file.
 
+## v1.4.0 (Experimental)
+
+### Added
+
+- **Modular Animation System**: Choose between different animation modes
+  - **Conveyor Belt Mode**: Icons travel across the bar like a conveyor belt
+    - Slow start, accelerates after the halfway point
+    - Icons push each other (no overlapping)
+    - Configurable travel duration and fade start point
+  - **Fade In/Out Mode**: Classic fade animation
+    - Icons fade in, stay visible, then fade out
+    - Configurable fade in/out durations and display time
+- New animation settings in the config panel:
+  - Animation Mode selector (Conveyor Belt / Fade In/Out)
+  - Conveyor Belt settings: Travel duration, Fade start point
+  - Fade settings: Fade in duration, Display duration, Fade out duration
+
+### Technical
+
+- Refactored animation system into separate `Animation.lua` module
+- Modular design allows easy addition of new animation modes
+- Icons no longer overlap in conveyor mode (automatic push-forward)
+- OnUpdate-based animation with performance optimization (disables when no animations active)
+- Easing functions library for smooth animations
+
+---
+
 ## v1.3.0
 
 ### Added
