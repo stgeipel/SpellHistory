@@ -2,6 +2,12 @@
 
 All notable changes to Spell History will be documented in this file.
 
+## v1.4.1
+
+### Bug Fixes
+
+- Fixed an issue where the addon could not be loaded
+
 ## v1.4.0
 
 ### Added
