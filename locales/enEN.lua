@@ -1,0 +1,57 @@
+--[[
+    Spell History - English Localization (Default)
+]]
+
+local _, addon = ...
+
+-- Create localization table
+SpellHistory = SpellHistory or {}
+SpellHistory.L = SpellHistory.L or {}
+
+local L = SpellHistory.L
+
+-- Core strings
+L.ADDON_LOADED = "Spell History loaded. Use /spellhistory for settings."
+L.POSITION_RESET = "Position has been reset."
+L.HISTORY_CLEARED = "History has been cleared."
+L.INTERRUPTED = "Interrupted"
+L.SUCCEEDED = "Succeeded"
+L.CMD_HELP = "Commands:"
+L.CMD_CONFIG = "Opens settings"
+L.CMD_CLEAR = "Clears history"
+
+-- Config strings
+L.MAX_SPELLS = "Number of Spells"
+L.MAX_SPELLS_DESC = "Sets how many spells are displayed in the history"
+L.ICON_SIZE = "Icon Size"
+L.ICON_SIZE_DESC = "Sets the size of the spell icons"
+L.SPACING = "Spacing between Icons"
+L.SPACING_DESC = "Sets the spacing between icons"
+L.LOCK_FRAME = "Lock Frame"
+L.LOCK_FRAME_DESC = "Prevents moving the frame"
+L.SHOW_BORDER = "Show Border"
+L.SHOW_BORDER_DESC = "Shows a border around the frame"
+L.BG_ALPHA = "Background Opacity"
+L.BG_ALPHA_DESC = "Sets background opacity (0 = transparent, 1 = opaque)"
+L.ICON_ALPHA = "Icon Opacity"
+L.ICON_ALPHA_DESC = "Sets the opacity of spell icons (0 = transparent, 1 = opaque)"
+L.SHOW_INTERRUPTED = "Show Interrupted Spells"
+L.SHOW_INTERRUPTED_DESC = "Shows interrupted/failed spells in the history"
+L.HIDE_PROFESSIONS = "Hide Profession Spells"
+L.HIDE_PROFESSIONS_DESC = "Hides spells from professions (Blacksmithing, Alchemy, etc.)"
+L.VERTICAL_ORIENTATION = "Vertical Orientation"
+L.VERTICAL_ORIENTATION_DESC = "Displays icons vertically instead of horizontally"
+L.GROW_DIRECTION = "Grow Direction"
+L.GROW_DIRECTION_DESC = "Direction in which new icons are added"
+L.GROW_NORMAL = "Normal"
+L.GROW_NORMAL_DESC_H = "Left to Right (newest on left)"
+L.GROW_NORMAL_DESC_V = "Top to Bottom (newest on top)"
+L.GROW_REVERSE = "Reverse"
+L.GROW_REVERSE_DESC_H = "Right to Left (newest on right)"
+L.GROW_REVERSE_DESC_V = "Bottom to Top (newest on bottom)"
+L.RESET_POSITION = "Reset Position"
+L.RESET_POSITION_DESC = "Resets the frame position to screen center"
+L.CLEAR_HISTORY = "Clear History"
+L.CLEAR_HISTORY_DESC = "Clears all entries from spell history"
+L.SHOW_TOOLTIPS = "Show Tooltips"
+L.SHOW_TOOLTIPS_DESC = "Shows spell tooltips when hovering over icons"

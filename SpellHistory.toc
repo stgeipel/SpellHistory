@@ -2,8 +2,13 @@
 ## Title: Spell History
 ## Notes: Shows a history of recently cast spells in a movable frame.
 ## Author: Nocx
-## Version: 1.2.0
+## Version: 1.3.0
 ## SavedVariables: SpellHistoryDB
 
+# Localization (English must be first as default, then other languages override)
+locales/enEN.lua
+locales/deDE.lua
+
+# Core files
 Core.lua
 Config.lua

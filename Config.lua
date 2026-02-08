@@ -7,68 +7,6 @@ local addonName = "Spell History"
 local L = SpellHistory.L
 
 --------------------------------------------------------------------------------
--- Localization for Config
---------------------------------------------------------------------------------
-local locale = GetLocale()
-local CL = {} -- Config Localization
-
-if locale == "deDE" then
-    CL.MAX_SPELLS = "Anzahl der Spells"
-    CL.MAX_SPELLS_DESC = "Legt fest, wie viele Spells in der Historie angezeigt werden"
-    CL.ICON_SIZE = "Icon-Größe"
-    CL.ICON_SIZE_DESC = "Legt die Größe der Spell-Icons fest"
-    CL.SPACING = "Abstand zwischen Icons"
-    CL.SPACING_DESC = "Legt den Abstand zwischen den Icons fest"
-    CL.LOCK_FRAME = "Fenster sperren"
-    CL.LOCK_FRAME_DESC = "Verhindert das Verschieben des Fensters"
-    CL.SHOW_BORDER = "Rahmen anzeigen"
-    CL.SHOW_BORDER_DESC = "Zeigt einen Rahmen um das Fenster an"
-    CL.BG_ALPHA = "Hintergrund-Transparenz"
-    CL.BG_ALPHA_DESC = "Legt die Transparenz des Hintergrunds fest (0 = durchsichtig, 1 = undurchsichtig)"
-    CL.VERTICAL_ORIENTATION = "Vertikale Ausrichtung"
-    CL.VERTICAL_ORIENTATION_DESC = "Zeigt die Icons vertikal statt horizontal an"
-    CL.GROW_DIRECTION = "Wachstumsrichtung"
-    CL.GROW_DIRECTION_DESC = "Richtung in die neue Icons hinzugefügt werden"
-    CL.GROW_NORMAL = "Normal"
-    CL.GROW_NORMAL_DESC_H = "Links nach Rechts (neueste links)"
-    CL.GROW_NORMAL_DESC_V = "Oben nach Unten (neueste oben)"
-    CL.GROW_REVERSE = "Umgekehrt"
-    CL.GROW_REVERSE_DESC_H = "Rechts nach Links (neueste rechts)"
-    CL.GROW_REVERSE_DESC_V = "Unten nach Oben (neueste unten)"
-    CL.RESET_POSITION = "Position zurücksetzen"
-    CL.RESET_POSITION_DESC = "Setzt die Position des Fensters auf die Bildschirmmitte zurück"
-    CL.CLEAR_HISTORY = "Historie löschen"
-    CL.CLEAR_HISTORY_DESC = "Löscht alle Einträge aus der Spell-Historie"
-else -- English
-    CL.MAX_SPELLS = "Number of Spells"
-    CL.MAX_SPELLS_DESC = "Sets how many spells are displayed in the history"
-    CL.ICON_SIZE = "Icon Size"
-    CL.ICON_SIZE_DESC = "Sets the size of the spell icons"
-    CL.SPACING = "Spacing between Icons"
-    CL.SPACING_DESC = "Sets the spacing between icons"
-    CL.LOCK_FRAME = "Lock Frame"
-    CL.LOCK_FRAME_DESC = "Prevents moving the frame"
-    CL.SHOW_BORDER = "Show Border"
-    CL.SHOW_BORDER_DESC = "Shows a border around the frame"
-    CL.BG_ALPHA = "Background Transparency"
-    CL.BG_ALPHA_DESC = "Sets background transparency (0 = transparent, 1 = opaque)"
-    CL.VERTICAL_ORIENTATION = "Vertical Orientation"
-    CL.VERTICAL_ORIENTATION_DESC = "Displays icons vertically instead of horizontally"
-    CL.GROW_DIRECTION = "Grow Direction"
-    CL.GROW_DIRECTION_DESC = "Direction in which new icons are added"
-    CL.GROW_NORMAL = "Normal"
-    CL.GROW_NORMAL_DESC_H = "Left to Right (newest on left)"
-    CL.GROW_NORMAL_DESC_V = "Top to Bottom (newest on top)"
-    CL.GROW_REVERSE = "Reverse"
-    CL.GROW_REVERSE_DESC_H = "Right to Left (newest on right)"
-    CL.GROW_REVERSE_DESC_V = "Bottom to Top (newest on bottom)"
-    CL.RESET_POSITION = "Reset Position"
-    CL.RESET_POSITION_DESC = "Resets the frame position to screen center"
-    CL.CLEAR_HISTORY = "Clear History"
-    CL.CLEAR_HISTORY_DESC = "Clears all entries from spell history"
-end
-
---------------------------------------------------------------------------------
 -- Settings Category Registration
 --------------------------------------------------------------------------------
 local category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
@@ -93,7 +31,7 @@ do
         category,
         "SPELL_HISTORY_MAX_SPELLS",
         Settings.VarType.Number,
-        CL.MAX_SPELLS,
+        L.MAX_SPELLS,
         defaultValue,
         GetValue,
         SetValue
@@ -102,7 +40,7 @@ do
     local options = Settings.CreateSliderOptions(minValue, maxValue, step)
     options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
 
-    Settings.CreateSlider(category, setting, options, CL.MAX_SPELLS_DESC)
+    Settings.CreateSlider(category, setting, options, L.MAX_SPELLS_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -125,7 +63,7 @@ do
         category,
         "SPELL_HISTORY_ICON_SIZE",
         Settings.VarType.Number,
-        CL.ICON_SIZE,
+        L.ICON_SIZE,
         defaultValue,
         GetValue,
         SetValue
@@ -134,7 +72,7 @@ do
     local options = Settings.CreateSliderOptions(minValue, maxValue, step)
     options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
 
-    Settings.CreateSlider(category, setting, options, CL.ICON_SIZE_DESC)
+    Settings.CreateSlider(category, setting, options, L.ICON_SIZE_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -157,7 +95,7 @@ do
         category,
         "SPELL_HISTORY_SPACING",
         Settings.VarType.Number,
-        CL.SPACING,
+        L.SPACING,
         defaultValue,
         GetValue,
         SetValue
@@ -166,7 +104,7 @@ do
     local options = Settings.CreateSliderOptions(minValue, maxValue, step)
     options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
 
-    Settings.CreateSlider(category, setting, options, CL.SPACING_DESC)
+    Settings.CreateSlider(category, setting, options, L.SPACING_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -188,13 +126,13 @@ do
         category,
         "SPELL_HISTORY_LOCKED",
         Settings.VarType.Boolean,
-        CL.LOCK_FRAME,
+        L.LOCK_FRAME,
         defaultValue,
         GetValue,
         SetValue
     )
 
-    Settings.CreateCheckbox(category, setting, CL.LOCK_FRAME_DESC)
+    Settings.CreateCheckbox(category, setting, L.LOCK_FRAME_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -216,13 +154,13 @@ do
         category,
         "SPELL_HISTORY_BORDER",
         Settings.VarType.Boolean,
-        CL.SHOW_BORDER,
+        L.SHOW_BORDER,
         defaultValue,
         GetValue,
         SetValue
     )
 
-    Settings.CreateCheckbox(category, setting, CL.SHOW_BORDER_DESC)
+    Settings.CreateCheckbox(category, setting, L.SHOW_BORDER_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -245,7 +183,7 @@ do
         category,
         "SPELL_HISTORY_BG_ALPHA",
         Settings.VarType.Number,
-        CL.BG_ALPHA,
+        L.BG_ALPHA,
         defaultValue,
         GetValue,
         SetValue
@@ -254,7 +192,39 @@ do
     local options = Settings.CreateSliderOptions(minValue, maxValue, step)
     options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, FormatPercentage)
 
-    Settings.CreateSlider(category, setting, options, CL.BG_ALPHA_DESC)
+    Settings.CreateSlider(category, setting, options, L.BG_ALPHA_DESC)
+end
+
+--------------------------------------------------------------------------------
+-- Setting: Icon Alpha Slider
+--------------------------------------------------------------------------------
+do
+    local minValue, maxValue, step = 0, 1, 0.05
+    local defaultValue = 1.0
+
+    local function GetValue()
+        return SpellHistoryDB.iconAlpha or 1.0
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.iconAlpha = value
+        SpellHistory:UpdateDisplay()
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_ICON_ALPHA",
+        Settings.VarType.Number,
+        L.ICON_ALPHA,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, FormatPercentage)
+
+    Settings.CreateSlider(category, setting, options, L.ICON_ALPHA_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -312,6 +282,33 @@ do
 end
 
 --------------------------------------------------------------------------------
+-- Setting: Show Tooltips Checkbox
+--------------------------------------------------------------------------------
+do
+    local defaultValue = true
+
+    local function GetValue()
+        return SpellHistoryDB.showTooltips
+    end
+
+    local function SetValue(value)
+        SpellHistoryDB.showTooltips = value
+    end
+
+    local setting = Settings.RegisterProxySetting(
+        category,
+        "SPELL_HISTORY_SHOW_TOOLTIPS",
+        Settings.VarType.Boolean,
+        L.SHOW_TOOLTIPS,
+        defaultValue,
+        GetValue,
+        SetValue
+    )
+
+    Settings.CreateCheckbox(category, setting, L.SHOW_TOOLTIPS_DESC)
+end
+
+--------------------------------------------------------------------------------
 -- Setting: Vertical Orientation Checkbox
 --------------------------------------------------------------------------------
 do
@@ -330,13 +327,13 @@ do
         category,
         "SPELL_HISTORY_VERTICAL_ORIENTATION",
         Settings.VarType.Boolean,
-        CL.VERTICAL_ORIENTATION,
+        L.VERTICAL_ORIENTATION,
         defaultValue,
         GetValue,
         SetValue
     )
 
-    Settings.CreateCheckbox(category, setting, CL.VERTICAL_ORIENTATION_DESC)
+    Settings.CreateCheckbox(category, setting, L.VERTICAL_ORIENTATION_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -354,14 +351,13 @@ do
 
     local function GetOptions()
         local container = Settings.CreateControlTextContainer()
-        -- Dynamic description based on current orientation
         local isVertical = SpellHistoryDB and SpellHistoryDB.verticalOrientation
         if isVertical then
-            container:Add(1, CL.GROW_NORMAL, CL.GROW_NORMAL_DESC_V)
-            container:Add(2, CL.GROW_REVERSE, CL.GROW_REVERSE_DESC_V)
+            container:Add(1, L.GROW_NORMAL, L.GROW_NORMAL_DESC_V)
+            container:Add(2, L.GROW_REVERSE, L.GROW_REVERSE_DESC_V)
         else
-            container:Add(1, CL.GROW_NORMAL, CL.GROW_NORMAL_DESC_H)
-            container:Add(2, CL.GROW_REVERSE, CL.GROW_REVERSE_DESC_H)
+            container:Add(1, L.GROW_NORMAL, L.GROW_NORMAL_DESC_H)
+            container:Add(2, L.GROW_REVERSE, L.GROW_REVERSE_DESC_H)
         end
         return container:GetData()
     end
@@ -372,13 +368,13 @@ do
         category,
         "SPELL_HISTORY_GROW_DIRECTION",
         Settings.VarType.Number,
-        CL.GROW_DIRECTION,
+        L.GROW_DIRECTION,
         defaultValue,
         GetValue,
         SetValue
     )
 
-    Settings.CreateDropdown(category, setting, GetOptions, CL.GROW_DIRECTION_DESC)
+    Settings.CreateDropdown(category, setting, GetOptions, L.GROW_DIRECTION_DESC)
 end
 
 --------------------------------------------------------------------------------
@@ -397,9 +393,9 @@ do
     end
 
     local initializer = Settings.CreateElementInitializer("SettingButtonControlTemplate", {
-        buttonText = CL.RESET_POSITION,
+        buttonText = L.RESET_POSITION,
         buttonClick = OnButtonClick,
-        tooltip = CL.RESET_POSITION_DESC,
+        tooltip = L.RESET_POSITION_DESC,
     })
     layout:AddInitializer(initializer)
 end
@@ -415,9 +411,9 @@ do
     end
 
     local initializer = Settings.CreateElementInitializer("SettingButtonControlTemplate", {
-        buttonText = CL.CLEAR_HISTORY,
+        buttonText = L.CLEAR_HISTORY,
         buttonClick = OnButtonClick,
-        tooltip = CL.CLEAR_HISTORY_DESC,
+        tooltip = L.CLEAR_HISTORY_DESC,
     })
     layout:AddInitializer(initializer)
 end

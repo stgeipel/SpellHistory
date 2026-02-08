@@ -1,0 +1,59 @@
+--[[
+    Spell History - German Localization
+]]
+
+local _, addon = ...
+
+-- Only load for German clients
+if GetLocale() ~= "deDE" then return end
+
+SpellHistory = SpellHistory or {}
+SpellHistory.L = SpellHistory.L or {}
+
+local L = SpellHistory.L
+
+-- Core strings
+L.ADDON_LOADED = "Spell History geladen. Nutze /spellhistory für Einstellungen."
+L.POSITION_RESET = "Position wurde zurückgesetzt."
+L.HISTORY_CLEARED = "Historie wurde gelöscht."
+L.INTERRUPTED = "Abgebrochen"
+L.SUCCEEDED = "Erfolgreich"
+L.CMD_HELP = "Befehle:"
+L.CMD_CONFIG = "Öffnet Einstellungen"
+L.CMD_CLEAR = "Löscht Historie"
+
+-- Config strings
+L.MAX_SPELLS = "Anzahl der Spells"
+L.MAX_SPELLS_DESC = "Legt fest, wie viele Spells in der Historie angezeigt werden"
+L.ICON_SIZE = "Icon-Größe"
+L.ICON_SIZE_DESC = "Legt die Größe der Spell-Icons fest"
+L.SPACING = "Abstand zwischen Icons"
+L.SPACING_DESC = "Legt den Abstand zwischen den Icons fest"
+L.LOCK_FRAME = "Fenster sperren"
+L.LOCK_FRAME_DESC = "Verhindert das Verschieben des Fensters"
+L.SHOW_BORDER = "Rahmen anzeigen"
+L.SHOW_BORDER_DESC = "Zeigt einen Rahmen um das Fenster an"
+L.BG_ALPHA = "Hintergrund-Deckkraft"
+L.BG_ALPHA_DESC = "Legt die Deckkraft des Hintergrunds fest (0 = durchsichtig, 1 = undurchsichtig)"
+L.ICON_ALPHA = "Icon-Deckkraft"
+L.ICON_ALPHA_DESC = "Legt die Deckkraft der Spell-Icons fest (0 = durchsichtig, 1 = undurchsichtig)"
+L.SHOW_INTERRUPTED = "Abgebrochene Zauber anzeigen"
+L.SHOW_INTERRUPTED_DESC = "Zeigt abgebrochene/fehlgeschlagene Zauber in der Historie an"
+L.HIDE_PROFESSIONS = "Berufe-Zauber ausblenden"
+L.HIDE_PROFESSIONS_DESC = "Blendet Zauber von Berufen (Schmiedekunst, Alchemie, etc.) aus"
+L.VERTICAL_ORIENTATION = "Vertikale Ausrichtung"
+L.VERTICAL_ORIENTATION_DESC = "Zeigt die Icons vertikal statt horizontal an"
+L.GROW_DIRECTION = "Wachstumsrichtung"
+L.GROW_DIRECTION_DESC = "Richtung in die neue Icons hinzugefügt werden"
+L.GROW_NORMAL = "Normal"
+L.GROW_NORMAL_DESC_H = "Links nach Rechts (neueste links)"
+L.GROW_NORMAL_DESC_V = "Oben nach Unten (neueste oben)"
+L.GROW_REVERSE = "Umgekehrt"
+L.GROW_REVERSE_DESC_H = "Rechts nach Links (neueste rechts)"
+L.GROW_REVERSE_DESC_V = "Unten nach Oben (neueste unten)"
+L.RESET_POSITION = "Position zurücksetzen"
+L.RESET_POSITION_DESC = "Setzt die Position des Fensters auf die Bildschirmmitte zurück"
+L.CLEAR_HISTORY = "Historie löschen"
+L.CLEAR_HISTORY_DESC = "Löscht alle Einträge aus der Spell-Historie"
+L.SHOW_TOOLTIPS = "Tooltips anzeigen"
+L.SHOW_TOOLTIPS_DESC = "Zeigt Zauber-Tooltips beim Überfahren der Icons an"

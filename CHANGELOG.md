@@ -2,6 +2,20 @@
 
 All notable changes to Spell History will be documented in this file.
 
+## v1.3.0
+
+### Added
+
+- **Icon Opacity**: New slider to adjust the transparency of spell icons (0-100%)
+- **Toggle Tooltips**: New option to enable/disable spell tooltips on hover
+
+### Changed
+
+- **Refactored Localization System**: All translations are now in separate locale files (`locales/enEN.lua`, `locales/deDE.lua`)
+- Improved code organization and maintainability
+
+---
+
 ## v1.2.0
 
 ### Improvements
